@@ -1,0 +1,70 @@
+
+
+/* Afficher les factures à partir d'un client_id */
+
+SELECT clients.nom_client, projets.client_id, factures.id_facture FROM factures
+JOIN devis ON factures.devis_id = devis.id_devis
+JOIN projets ON devis.projet_id = projets.id_projet
+JOIN clients ON projets.client_id = clients.id_client
+
+
+/* Afficher le client qui a le plus de factures */
+
+SELECT clients.nom_client, COUNT(*) AS factures FROM clients
+JOIN projets ON clients.id_client = projets.client_id
+JOIN devis ON projets.id_projet = devis.projet_id
+JOIN factures ON devis.id_devis = factures.devis_id
+GROUP BY clients.nom_client
+HAVING COUNT(*) = (
+    SELECT MAX(factures)
+    FROM (
+        SELECT COUNT(*) AS factures
+        FROM factures
+        JOIN devis ON factures.devis_id = devis.id_devis
+        JOIN projets ON devis.projet_id = projets.id_projet
+        JOIN clients ON projets.client_id = clients.id_client													
+        GROUP BY clients.nom_client
+    ) AS subquery
+);
+
+
+/* Calculer le montant total facturé pour un Client */
+
+SELECT clients.nom_client, SUM(factures.total) AS total FROM clients
+JOIN projets ON clients.id_client = projets.client_id
+JOIN devis ON projets.id_projet = devis.projet_id
+JOIN factures ON devis.id_devis = factures.devis_id
+GROUP BY clients.nom_client
+
+
+/* Afficher le nombre de devis par client */
+
+SELECT clients.nom_client, COUNT(*) AS nb_dvs FROM clients
+JOIN projets ON clients.id_client = projets.client_id
+JOIN devis ON projets.id_projet = devis.projet_id
+GROUP BY clients.nom_client
+
+
+/* Calculer le CA */
+
+SELECT SUM(total) AS total_f
+FROM factures
+
+/* Calculer le montant des factures en attente de paiement */
+
+SELECT c.nom_client, SUM(f.prix_TTC_factures) AS montantTotalFacturéEnAttente
+FROM factures f, clients c, devis d, projets p 
+WHERE c.id_client = p.client_id AND p.id_projet = d.projet_id AND d.id_devis = f.devis_id AND f.date_paiement_facture is NULL
+GROUP BY c.nom_client;
+
+
+/*Afficher  les facture en retard de paiement*/
+
+SELECT *,
+    DATEDIFF(DAY, f.date_crea_facture, GETDATE()) as nmbr_jours
+FROM
+    factures f
+WHERE
+    f.date_paiement_facture IS NULL
+    AND DATEDIFF(DAY, f.date_crea_facture, GETDATE()) > 30;
+
