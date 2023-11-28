@@ -1,0 +1,15 @@
+/*Afficher une equipe*/ 
+SELECT personne.id, personne.prenom, personne.nom
+FROM personne
+JOIN equipe_has_personne ON personne.id = equipe_has_personne.personne_id
+WHERE equipe_has_personne.equipe_id = 1;
+
+
+
+/*Afficher toutes les Equipes*/
+
+SELECT e.nom AS equipe_nom, p.id, p.prenom, p.nom
+FROM personne p
+JOIN equipe_has_personne ep ON p.id = ep.personne_id
+JOIN equipe e ON ep.equipe_id = e.id;
+
